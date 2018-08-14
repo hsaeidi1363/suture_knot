@@ -1,0 +1,8 @@
+#goal definitin
+geometry_msgs/Twist target
+---
+#result definition
+bool target_reached
+---
+#feedback definition
+geometry_msgs/Twist current_waypoint

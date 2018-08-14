@@ -1,0 +1,8 @@
+#goal definitin
+geometry_msgs/Wrench force_limit
+---
+#result definition
+bool force_limit_reached
+---
+#feedback definition
+geometry_msgs/Wrench current_force

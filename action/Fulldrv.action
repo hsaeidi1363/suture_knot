@@ -1,0 +1,9 @@
+#goal definition
+bool start_fulldrv
+---
+#result definition
+bool fulldrv_done
+---
+#feedback
+bool firing_suture
+
