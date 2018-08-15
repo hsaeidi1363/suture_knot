@@ -1,0 +1,3 @@
+<launch>
+  <node pkg = "suture_knot" type = "suture_knot_client" name="knot_client"/>
+</launch>

@@ -6,6 +6,7 @@
 
 class ForcecheckAction
 {
+
   public:
     ForcecheckAction(std::string name):
       as_(nh_,name, false),
@@ -71,7 +72,7 @@ class ForcecheckAction
 
 int main(int argc, char **argv){
   ros::init(argc, argv, "forcecheck");
-  ForcecheckAction reach(ros::this_node::getName());
+  ForcecheckAction forcecheck(ros::this_node::getName());
   ros::spin();
 
   return 0;
