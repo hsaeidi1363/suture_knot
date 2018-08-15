@@ -36,16 +36,14 @@ class ForcecheckAction
 		if (!as_.isActive())
 			return;
 		rob_force = _msg;
-		float df_x = fabs(force_limit.force.x - rob_force.force.x); 
-		float df_y = fabs(force_limit.force.y - rob_force.force.y); 
-		float df_z = fabs(force_limit.force.z - rob_force.force.z); 
-		float dT_x = fabs(force_limit.torque.x - rob_force.torque.x); 
-		float dT_y = fabs(force_limit.torque.y - rob_force.torque.y); 
-		float dT_z = fabs(force_limit.torque.z - rob_force.torque.z); 
-		float th_f = 0.01; //threshold for force difference between the sensor reading and the limit
-		float th_T = 0.01; //threshold for force difference between the sensor reading and the limit
-		bool force_reached = df_x < th_f || df_y < th_f || df_z < th_f || dT_x < th_T || dT_y < th_T || dT_z < th_T;
-		if(!force_reached){
+		bool exessive_fx = ForcecheckAction::limit_reached(rob_force.force.x, force_limit.force.x); 
+		bool exessive_fy = ForcecheckAction::limit_reached(rob_force.force.y, force_limit.force.y); 
+		bool exessive_fz = ForcecheckAction::limit_reached(rob_force.force.z, force_limit.force.z); 
+		bool exessive_tx = ForcecheckAction::limit_reached(rob_force.torque.x, force_limit.torque.x); 
+		bool exessive_ty = ForcecheckAction::limit_reached(rob_force.torque.y, force_limit.torque.y); 
+		bool exessive_tz = ForcecheckAction::limit_reached(rob_force.torque.z, force_limit.torque.z); 
+		bool exessive_force = exessive_fx || exessive_fy ||exessive_fz || exessive_tx || exessive_ty || exessive_tz;
+		if(!exessive_force){
 			feedback_.current_force = rob_force;
 			ROS_INFO("published feedback");
 			as_.publishFeedback(feedback_);
@@ -57,16 +55,21 @@ class ForcecheckAction
 	}
 
 
-
+  bool limit_reached(float _in, float _limit){
+    if ( (_limit < 0 && _in <= _limit) || (_limit > 0 && _in >= _limit) )
+      return true;
+    else 
+      return false;  
+  }
     protected:
       ros::NodeHandle nh_;
       actionlib::SimpleActionServer<suture_knot::ForcecheckAction> as_;
       std::string action_name_;
-	  geometry_msgs::Wrench rob_force;
-	  geometry_msgs::Wrench force_limit;
+	    geometry_msgs::Wrench rob_force;
+	    geometry_msgs::Wrench force_limit;
       suture_knot::ForcecheckFeedback feedback_;
       suture_knot::ForcecheckResult result_;
-	  ros::Subscriber force_sub;
+	    ros::Subscriber force_sub;
 
 };
 
