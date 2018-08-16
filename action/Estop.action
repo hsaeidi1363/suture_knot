@@ -1,0 +1,8 @@
+#goal definitin
+bool get_estop_pos
+---
+#result definition
+geometry_msgs/Twist estop_pos
+---
+#feedback definition
+bool getting_pos

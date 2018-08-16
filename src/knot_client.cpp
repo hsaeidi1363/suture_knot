@@ -2,6 +2,7 @@
 #include<suture_knot/FulldrvAction.h>
 #include<suture_knot/ReachAction.h>
 #include<suture_knot/ForcecheckAction.h>
+#include<suture_knot/EstopAction.h>
 #include<actionlib/client/simple_action_client.h>
 #include<actionlib/client/terminal_state.h>
 #include<geometry_msgs/Twist.h>
@@ -18,17 +19,19 @@ class KnotClient{
 		typedef actionlib::SimpleActionClient<suture_knot::ReachAction> reach_client;
 		typedef actionlib::SimpleActionClient<suture_knot::FulldrvAction> fulldrv_client;
 		typedef actionlib::SimpleActionClient<suture_knot::ForcecheckAction> forcecheck_client;
+		typedef actionlib::SimpleActionClient<suture_knot::EstopAction> estop_client;
 		reach_client ac1_;//("reach", true);
 		fulldrv_client ac2_;//("fulldrv", true);
 		forcecheck_client ac3_;//("forcecheck", true);
+    estop_client ac4_;
 		// constructor  
 		KnotClient(ros::NodeHandle nh):
   			nh_( nh ),
 			ac1_(nh, "reach",true),
 			ac2_(nh,"fulldrv", true),
-			ac3_(nh,"forcecheck",true)			
+			ac3_(nh,"forcecheck",true),			
+			ac4_(nh,"estop",true)			
 			{	
-			ROS_INFO("enterened the constructor");	
 			
 			ROS_INFO("waiting for the REACH action server to start.");
 			ac1_.waitForServer();
@@ -42,27 +45,31 @@ class KnotClient{
 			ROS_INFO("waiting for the FORCECHECK action server to start.");
 			ac3_.waitForServer();
 			ROS_INFO("FORCECHECK Action server started.");
+
+			ROS_INFO("waiting for the ESTOP action server to start.");
+			ac4_.waitForServer();
+			ROS_INFO("ESTOP Action server started.");
 		}
 		//Destructor
 		~KnotClient(){
 		}
 
 		void executeReach(suture_knot::ReachGoal &goal){
-
 			ac1_.sendGoal(goal, boost::bind(&KnotClient::doneReach,this, _1,_2),boost::bind(&KnotClient::activeReach,this),boost::bind(&KnotClient::feedbackReach,this, _1));
 		}
 
 		void executeFulldrv(suture_knot::FulldrvGoal &goal){
-
 			ac2_.sendGoal(goal, boost::bind(&KnotClient::doneFulldrv,this, _1,_2),boost::bind(&KnotClient::activeFulldrv,this),boost::bind(&KnotClient::feedbackFulldrv,this, _1));
 		}
 
 
 		void executeForcecheck(suture_knot::ForcecheckGoal &goal){
-
 			ac3_.sendGoal(goal, boost::bind(&KnotClient::doneForcecheck,this, _1,_2),boost::bind(&KnotClient::activeForcecheck,this),boost::bind(&KnotClient::feedbackForcecheck,this, _1));
 		}
 
+		void executeEstop(suture_knot::EstopGoal &goal){
+			ac4_.sendGoal(goal, boost::bind(&KnotClient::doneEstop,this, _1,_2),boost::bind(&KnotClient::activeEstop,this),boost::bind(&KnotClient::feedbackEstop,this, _1));
+		}
 
 
 		void doneReach(const actionlib::SimpleClientGoalState& state,
@@ -78,8 +85,21 @@ class KnotClient{
 		void doneForcecheck(const actionlib::SimpleClientGoalState& state,
 					   const ForcecheckResultConstPtr& result){
 			ROS_INFO("end of forcecheck");
+      if (result->force_limit_reached){
+        suture_knot::EstopGoal goal;
+        goal.get_estop_pos = true;
+        KnotClient::executeEstop(goal); 
+      }
 		}	
 
+		void doneEstop(const actionlib::SimpleClientGoalState& state,
+					   const EstopResultConstPtr& result){
+			ROS_INFO("end of estop");
+	    suture_knot::ReachGoal goal;
+     	geometry_msgs::Twist target;
+	    goal.target = result->estop_pos;
+    	KnotClient::executeReach(goal);				
+		}	
 
 		void activeReach(){
 			ROS_INFO("reach is active");
@@ -93,6 +113,9 @@ class KnotClient{
 			ROS_INFO("forcecheck is active");
 		}
 
+		void activeEstop(){
+			ROS_INFO("estop is active");
+		}
 		void feedbackReach(const ReachFeedbackConstPtr& feedback)
 		{
 		  ROS_INFO("Got Feedback from reach");
@@ -105,18 +128,17 @@ class KnotClient{
 
 		void feedbackForcecheck(const ForcecheckFeedbackConstPtr& feedback)
 		{
-		  ROS_INFO("Got Feedback from forcecheck");
+      ROS_INFO("Got Feedback from forcecheck");
+  	}
+
+		void feedbackEstop(const EstopFeedbackConstPtr& feedback)
+		{
+		  ROS_INFO("Got Feedback from estop");
 		}
-
 	private:
-		enum state {BITE, FIRESTICH, STRETCH, TURN};
+		enum state {BITE, FIRESUTURE, STRETCH, TURN};
+    
 };
-
-
-
-
-
-
 
 int main (int argc, char **argv){
 	ros::init(argc, argv, "knot_client");
