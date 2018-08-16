@@ -95,6 +95,7 @@ class ReachAction
 				result_.target_reached = true;
 				as_.setSucceeded(result_);
 				ROS_INFO("got to the end!");
+				
 			}
 		}
 	}
@@ -108,7 +109,7 @@ class ReachAction
 		_IP->CurrentPositionVector->VecData      [3] =    rob_pos.angular.x   ;
 		_IP->CurrentPositionVector->VecData      [4] =    rob_pos.angular.y   ;
 		_IP->CurrentPositionVector->VecData      [5] =    rob_pos.angular.z   ;
-
+		ROS_INFO(" initialized the plan with: %f, %f, %f, %f, %f, %f",rob_pos.linear.x, rob_pos.linear.y, rob_pos.linear.z,rob_pos.angular.x,rob_pos.angular.y,rob_pos.angular.z);
 		//setting the target velcoity
 		_IP->TargetPositionVector->VecData       [0] =   target_pos.linear.x    ;
 		_IP->TargetPositionVector->VecData       [1] =   target_pos.linear.y    ;
@@ -116,6 +117,7 @@ class ReachAction
 		_IP->TargetPositionVector->VecData       [3] =   target_pos.angular.x   ;
 		_IP->TargetPositionVector->VecData       [4] =   target_pos.angular.y   ;
 		_IP->TargetPositionVector->VecData       [5] =   target_pos.angular.z   ;
+		ROS_INFO(" for the target: %f, %f, %f, %f, %f, %f",target_pos.linear.x, target_pos.linear.y, target_pos.linear.z,target_pos.angular.x,target_pos.angular.y,target_pos.angular.z);
 
 		for(int i=0; i < NUMBER_OF_DOFS; i++){
 			_IP->CurrentVelocityVector->VecData      [i] =    0.0;
@@ -137,6 +139,7 @@ class ReachAction
 		_IP->SelectionVector->VecData            [5] =   true        ;
 
 		plan_initialized = true;
+		ResultValue = 0;
 		ROS_INFO("initialized the plan");
 
 	}

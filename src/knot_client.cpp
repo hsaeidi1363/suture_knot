@@ -7,7 +7,7 @@
 #include<actionlib/client/terminal_state.h>
 #include<geometry_msgs/Twist.h>
 #include<geometry_msgs/Wrench.h>
-
+#include<std_msgs/Bool.h>
 
 using namespace suture_knot;
 
@@ -26,13 +26,22 @@ class KnotClient{
     estop_client ac4_;
 		// constructor  
 		KnotClient(ros::NodeHandle nh):
-  			nh_( nh ),
+  		nh_( nh ),
+      suture_started(false),
+      reach_started(false),
 			ac1_(nh, "reach",true),
 			ac2_(nh,"fulldrv", true),
 			ac3_(nh,"forcecheck",true),			
 			ac4_(nh,"estop",true)			
 			{	
-			
+		  dbg_poscommand_sub = nh.subscribe("reach_command_dbg",1,&KnotClient::pos_command_callback, this);	
+		  dbg_startsuture_sub = nh.subscribe("start_suture_dbg",1,&KnotClient::start_suture_callback, this);	
+      forcecheck_goal.force_limit.force.x = 1.0;
+      forcecheck_goal.force_limit.force.y = 1.0;
+      forcecheck_goal.force_limit.force.z = 1.0;
+      forcecheck_goal.force_limit.torque.x = 1.0;
+      forcecheck_goal.force_limit.torque.y = 1.0;
+      forcecheck_goal.force_limit.torque.z = 1.0;
 			ROS_INFO("waiting for the REACH action server to start.");
 			ac1_.waitForServer();
 			ROS_INFO("REACH Action server started.");
@@ -53,6 +62,19 @@ class KnotClient{
 		//Destructor
 		~KnotClient(){
 		}
+    void start_suture_callback(const std_msgs::Bool & _start_command){
+      suture_started = _start_command.data;
+    }
+ 
+    void pos_command_callback(const geometry_msgs::Twist & _command){
+	    reach_goal.target = _command;
+      if(suture_started && !reach_started){
+      	KnotClient::executeReach(reach_goal);
+        reach_started = true;
+      	KnotClient::executeForcecheck(forcecheck_goal);
+        ROS_INFO("new goal sent to REACH action");				
+      }				
+    }
 
 		void executeReach(suture_knot::ReachGoal &goal){
 			ac1_.sendGoal(goal, boost::bind(&KnotClient::doneReach,this, _1,_2),boost::bind(&KnotClient::activeReach,this),boost::bind(&KnotClient::feedbackReach,this, _1));
@@ -75,6 +97,9 @@ class KnotClient{
 		void doneReach(const actionlib::SimpleClientGoalState& state,
 					   const ReachResultConstPtr& result){
 			ROS_INFO("end of reach");
+      reach_started = false;
+    	fulldrv_goal.start_fulldrv = true;
+    	KnotClient::executeFulldrv(fulldrv_goal);				
 		}	
 
 		void doneFulldrv(const actionlib::SimpleClientGoalState& state,
@@ -84,21 +109,20 @@ class KnotClient{
 
 		void doneForcecheck(const actionlib::SimpleClientGoalState& state,
 					   const ForcecheckResultConstPtr& result){
-			ROS_INFO("end of forcecheck");
+			ROS_INFO("forcecheck detected a force limit violation");
       if (result->force_limit_reached){
-        suture_knot::EstopGoal goal;
-        goal.get_estop_pos = true;
-        KnotClient::executeEstop(goal); 
+        estop_goal.get_estop_pos = true;
+        KnotClient::executeEstop(estop_goal); 
+        ROS_INFO("checking current pose for ESTOP");
       }
 		}	
 
 		void doneEstop(const actionlib::SimpleClientGoalState& state,
 					   const EstopResultConstPtr& result){
 			ROS_INFO("end of estop");
-	    suture_knot::ReachGoal goal;
-     	geometry_msgs::Twist target;
-	    goal.target = result->estop_pos;
-    	KnotClient::executeReach(goal);				
+      reach_goal.target = result->estop_pos;
+    	KnotClient::executeReach(reach_goal);				
+      ROS_INFO("ESTOP command sent");
 		}	
 
 		void activeReach(){
@@ -137,7 +161,15 @@ class KnotClient{
 		}
 	private:
 		enum state {BITE, FIRESUTURE, STRETCH, TURN};
-    
+    ros::Subscriber dbg_poscommand_sub;
+    ros::Subscriber dbg_startsuture_sub; 
+    suture_knot::ReachGoal reach_goal;
+    suture_knot::ForcecheckGoal forcecheck_goal;
+    suture_knot::EstopGoal estop_goal;
+    suture_knot::FulldrvGoal fulldrv_goal;
+
+    bool suture_started;     
+    bool reach_started;
 };
 
 int main (int argc, char **argv){
@@ -147,16 +179,7 @@ int main (int argc, char **argv){
 	KnotClient knot_client(nh);
   
 
-	suture_knot::ForcecheckGoal goal3;
-	goal3.force_limit.force.x = 1.0;
-	goal3.force_limit.force.y = 1.0;
-	goal3.force_limit.force.z = 1.0;
-	goal3.force_limit.torque.x = 1.0;
-	goal3.force_limit.torque.y = 1.0;
-	goal3.force_limit.torque.z = 1.0;
-
-	knot_client.executeForcecheck(goal3);				
-
+/*
 
 	suture_knot::ReachGoal goal1;
 	geometry_msgs::Twist target;
@@ -168,13 +191,9 @@ int main (int argc, char **argv){
 	target.angular.z = 1.84149959732;
 	goal1.target = target;
 	knot_client.executeReach(goal1);				
+*/
 
-
-
-
-	suture_knot::FulldrvGoal goal2;
-	goal2.start_fulldrv = true;
-	knot_client.executeFulldrv(goal2);				
+//	suture_knot::FulldrvGoal goal2;
 
 
 
