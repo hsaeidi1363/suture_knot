@@ -12,7 +12,7 @@
 using namespace suture_knot;
 
 //also need reading the current rob pose and caluclate the traj
-// read some commands for starting the suturing from a GUI
+//TODO: read some commands for starting the suturing from a GUI
 class KnotClient{
 	public:
 		ros::NodeHandle nh_;
@@ -20,9 +20,9 @@ class KnotClient{
 		typedef actionlib::SimpleActionClient<suture_knot::FulldrvAction> fulldrv_client;
 		typedef actionlib::SimpleActionClient<suture_knot::ForcecheckAction> forcecheck_client;
 		typedef actionlib::SimpleActionClient<suture_knot::EstopAction> estop_client;
-		reach_client ac1_;//("reach", true);
-		fulldrv_client ac2_;//("fulldrv", true);
-		forcecheck_client ac3_;//("forcecheck", true);
+		reach_client ac1_;
+		fulldrv_client ac2_;
+		forcecheck_client ac3_;
     estop_client ac4_;
 		// constructor  
 		KnotClient(ros::NodeHandle nh):
@@ -179,36 +179,8 @@ int main (int argc, char **argv){
 	KnotClient knot_client(nh);
   
 
-/*
-
-	suture_knot::ReachGoal goal1;
-	geometry_msgs::Twist target;
-	target.linear.x = 0.0100001413817;
-	target.linear.y = -0.540000776305;
-	target.linear.z = 0.714293314365; 
-	target.angular.x = 3.09999794506;
-	target.angular.y = 0.00148121916563;
-	target.angular.z = 1.84149959732;
-	goal1.target = target;
-	knot_client.executeReach(goal1);				
-*/
-
-//	suture_knot::FulldrvGoal goal2;
-
-
 
   ros::spin();
   return 0;
 }
 
-		//  actionlib::SimpleActionClient<suture_knot::FulldrvAction> ac2_("fulldrv", true);
-		//  actionlib::SimpleActionClient<suture_knot::ReachAction> ac1_("reach", true);
-		//  actionlib::SimpleActionClient<suture_knot::FulldrvAction> ac2_("fulldrv", true);
-
-/*  bool finished_before_timeout1 = ac1_.waitForResult(ros::Duration(15.0));
-					  if(finished_before_timeout1){  
-						actionlib::SimpleClientGoalState state1 = ac1_.getState();
-						ROS_INFO("Action finished: %s", state1.toString().c_str());
-					  }else
-						ROS_INFO("Action did not finish before the time out");
-					*/

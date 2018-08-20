@@ -5,30 +5,36 @@
   
 class FulldrvAction{
   protected:
+    //following ROS format for defining action server
     ros::NodeHandle nh_;
     actionlib::SimpleActionServer<suture_knot::FulldrvAction> as_;
     std::string action_name_;
     suture_knot::FulldrvFeedback feedback_;
     suture_knot::FulldrvResult result_;
+    // a publisher for the topic that accepts fulldrv commands in the endo360_rtt component
     ros::Publisher fulldrv_pub;
 	public:
 		FulldrvAction(std::string name):
 	    as_(nh_, name,boost::bind(&FulldrvAction::executeCB, this, _1), false),
       action_name_(name)
     {
+        // a publisher for the topic that accepts fulldrv commands in the endo360_rtt component
           fulldrv_pub = nh_.advertise<sensor_msgs::JointState>("/endo360/CmdJointState",1);
+          // start the action server
       		as_.start();
     }
     ~FulldrvAction(void)
     {
     }
-    
+    // once a goal (here "true" value is received send the full drive command wait for it to be performed 
     void executeCB(const suture_knot::FulldrvGoalConstPtr &goal){
-        ros::Rate loop_rate(1); 
+      if(goal->start_fulldrv){
+        ros::Rate loop_rate(1); //TODO: change it to propper wait time on the actual tool  
         feedback_.firing_suture = true;
-        ROS_INFO("Firing a full drive suture");
+        ROS_INFO("Firing a suture (full drive mode)");
       
         sensor_msgs::JointState fulldrv_msg;
+        // packing the message components based on the endo360-fulldrv.sh
         fulldrv_msg.header.stamp = ros::Time::now();  
         fulldrv_msg.header.frame_id ="endo360";
         fulldrv_msg.name.push_back("fulldrive");
@@ -47,7 +53,7 @@ class FulldrvAction{
         // do we need any preempts?
         while(ros::ok()){
           ctr++;
-          if(ctr > 10){
+          if(ctr > 1){
             break;
           }else{
             as_.publishFeedback(feedback_);
@@ -57,6 +63,10 @@ class FulldrvAction{
         result_.fulldrv_done = true;
         ROS_INFO("%s: finished the suture full drive", action_name_.c_str());
         as_.setSucceeded(result_);
+      }else{
+        ROS_INFO("send a goal with True value to start the full drive");
+      }
+      
     }
 
 };

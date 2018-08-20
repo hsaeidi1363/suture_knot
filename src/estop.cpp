@@ -16,7 +16,8 @@ class EstopAction
       as_.registerPreemptCallback(boost::bind(&EstopAction::preemptCB, this));
       //add the subscirbers here
       //TODO: modify the pose topic accordingly
-	    rob_pos_sub = nh_.subscribe("robot/worldpos", 1,&EstopAction::posCB, this);
+	    // reads the current pose of robot to send as a new target pose and halt the robot
+      rob_pos_sub = nh_.subscribe("robot/worldpos", 1,&EstopAction::posCB, this);
       estop_command = false;
       as_.start();
     }
@@ -41,6 +42,7 @@ class EstopAction
 			ROS_INFO("published feedback");
 			as_.publishFeedback(feedback_);
 		}else{
+      //send back the current robot pose for stopping the robot
 			result_.estop_pos = rob_pos;
 			as_.setSucceeded(result_);
 			ROS_INFO("freeze!!!");
@@ -49,6 +51,7 @@ class EstopAction
 
 
     protected:
+      // define the actino server based on ROS definitions
       ros::NodeHandle nh_;
       actionlib::SimpleActionServer<suture_knot::EstopAction> as_;
       std::string action_name_;
