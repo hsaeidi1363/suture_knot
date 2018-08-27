@@ -160,6 +160,9 @@ class KnotClient{
 		  ROS_INFO("Got Feedback from estop");
 		}
 	private:
+    // the suture steps: detect a point, reach (while checking force), fire the suture, pull (stretch), turn,
+    // missing parts (actions): 1) turning action, 2) detect the target pose from the point cloud,3) calculate and end point to stretch the suture 
+    
 		enum state {BITE, FIRESUTURE, STRETCH, TURN};
     ros::Subscriber dbg_poscommand_sub;
     ros::Subscriber dbg_startsuture_sub; 

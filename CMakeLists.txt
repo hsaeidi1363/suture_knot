@@ -69,7 +69,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## Generate actions in the 'action' folder
 add_action_files(
     DIRECTORY action
-    FILES Fulldrv.action Reach.action Forcecheck.action Estop.action
+    FILES Fulldrv.action Reach.action Forcecheck.action Estop.action Turntool.action
 #   Action1.action
 #   Action2.action
 )
@@ -141,3 +141,9 @@ target_link_libraries(suture_knot_reach ${catkin_LIBRARIES} ReflexxesTypeII)
 
 add_executable(suture_knot_client src/knot_client.cpp)
 target_link_libraries(suture_knot_client ${catkin_LIBRARIES})
+
+add_executable(suture_knot_rtt2sim src/rtt2sim.cpp)
+target_link_libraries(suture_knot_rtt2sim ${catkin_LIBRARIES})
+
+add_executable(suture_knot_sim2rtt src/sim2rtt.cpp)
+target_link_libraries(suture_knot_sim2rtt ${catkin_LIBRARIES})
